@@ -1,14 +1,32 @@
-let filename = '.gitignore'
-if filereadable(filename)
+
+function! s:parse(filename)
     let igstring = ''
-    for oline in readfile(filename)
-        let line = substitute(oline, '\s|\n|\r', '', "g")
-        if line =~ '^#' | con | endif
-        if line == '' | con  | endif
-        if line =~ '^!' | con  | endif
-        if line =~ '/$' | let igstring .= "," . line . "*" | con | endif
-        let igstring .= "," . line
+    if filereadable(a:filename)
+        for oline in readfile(a:filename)
+            let line = substitute(oline, '\s|\n|\r', '', "g")
+            if line =~ '^#' | con | endif
+            if line == '' | con  | endif
+            if line =~ '^!' | con  | endif
+            if line =~ '/$' | let igstring .= "," . line . "*" | con | endif
+            let igstring .= "," . line
+        endfor
+    endif
+    return substitute(igstring, '^,', '', "g")
+endfunction
+
+function! s:globalconfig()
+    " TODO parse the .gitignore from $(git config --global core.excludesfile)
+    return ''
+endfunction
+
+function! s:localconfigs()
+    let fname = '.gitignore'
+    let configs = ''
+    for i in range(0, 5)
+        let configs .= s:parse(fname)
+        let fname = '../'.fname
     endfor
-    let execstring = "set wildignore=".substitute(igstring, '^,', '', "g")
-    execute execstring
-endif
+    return configs
+endfunction
+
+exec 'set wildignore='.s:globalconfig().s:localconfigs()
